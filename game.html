@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Frogger Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #333;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background-color: #222;
+      border: 3px solid #0f0;
+    }
+
+    #messageBox {
+      color: white;
+      font-size: 1.5em;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .back{
+        color: aliceblue;
+        font-size: large;
+    }
+
+    #restartBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1em;
+      display: none;
+      background-color: lime;
+      border: none;
+      cursor: pointer;
+    }
+
+    #scoreBox {
+      color: lime;
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div id="scoreBox">Score: 0</div>
+  <div id="messageBox"></div>
+  <button id="restartBtn">Restart Game</button>
+  <br><br>
+  <a class="back" href="scratch.html">Click Here To Go Back To Previous Page</a>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const messageBox = document.getElementById('messageBox');
+    const restartBtn = document.getElementById('restartBtn');
+    const scoreBox = document.getElementById('scoreBox');
+
+    let frog = {
+      x: 180,
+      y: 360,
+      width: 20,
+      height: 20,
+      color: 'lime'
+    };
+
+    const cars = [
+      { x: 0, y: 300, speed: 2 },
+      { x: 300, y: 300, speed: 3.5 },
+      { x: 100, y: 250, speed: -2.5 },
+      { x: 350, y: 250, speed: -4 },
+      { x: 0, y: 200, speed: 3 },
+      { x: 200, y: 200, speed: 1.5 },
+      { x: 400, y: 150, speed: -5 },
+      { x: 100, y: 150, speed: -2 },
+      { x: 0, y: 100, speed: 3.5 },
+      { x: 250, y: 100, speed: -3 },
+      { x: 50, y: 50, speed: 2.5 },
+      { x: 300, y: 50, speed: -2 }
+    ];
+
+    let gameOver = false;
+    let score = 0;
+    let levelStartTime = Date.now();
+
+    document.addEventListener('keydown', (e) => {
+      if (gameOver) return;
+      switch (e.key) {
+        case 'ArrowUp': frog.y -= 20; break;
+        case 'ArrowDown': frog.y += 20; break;
+        case 'ArrowLeft': frog.x -= 20; break;
+        case 'ArrowRight': frog.x += 20; break;
+      }
+    });
+
+    restartBtn.onclick = () => {
+      location.reload();
+    };
+
+    function resetFrog() {
+      frog.x = 180;
+      frog.y = 360;
+      levelStartTime = Date.now();
+    }
+
+    function drawFrog() {
+      ctx.fillStyle = frog.color;
+      ctx.fillRect(frog.x, frog.y, frog.width, frog.height);
+    }
+
+    function drawCars() {
+      ctx.fillStyle = 'red';
+      cars.forEach(car => {
+        ctx.fillRect(car.x, car.y, 80, 20);
+        car.x += car.speed;
+
+        if (car.speed > 0 && car.x > canvas.width) car.x = -80;
+        if (car.speed < 0 && car.x < -80) car.x = canvas.width;
+      });
+    }
+
+    function checkCollision() {
+      return cars.some(car =>
+        frog.x < car.x + 80 &&
+        frog.x + frog.width > car.x &&
+        frog.y < car.y + 20 &&
+        frog.y + frog.height > car.y
+      );
+    }
+
+    function updateScoreBox() {
+      scoreBox.textContent = `Score: ${score}`;
+    }
+
+    function endGame(message) {
+      gameOver = true;
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      restartBtn.style.display = 'inline-block';
+    }
+
+    function draw() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawFrog();
+      drawCars();
+
+      if (checkCollision()) {
+        score = 0;
+        updateScoreBox();
+        endGame("You got hit! Game over.");
+        return;
+      }
+
+      if (frog.y < 0) {
+        const elapsedTime = (Date.now() - levelStartTime) / 1000; // in seconds
+        const points = Math.max(1, Math.round(10 - elapsedTime)); // more points for faster completion
+        score += points;
+        updateScoreBox();
+        messageBox.textContent = `You made it! +${points} points. Going again...`;
+        messageBox.style.display = 'block';
+        setTimeout(() => {
+          messageBox.style.display = 'none';
+          resetFrog();
+        }, 1500);
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    updateScoreBox();
+    draw();
+  </script>
+</body>
+</html>
+
